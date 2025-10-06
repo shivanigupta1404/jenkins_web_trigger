@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import requests
 from requests.auth import HTTPBasicAuth
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -8,7 +9,7 @@ app.secret_key = 'your-secret-key'
 # Jenkins config
 JENKINS_URL = "http://172.20.4.91:8080/"
 USERNAME = "qualitia"
-API_TOKEN = ""
+API_TOKEN = os.getenv('JENKINS_API_TOKEN')
 
 def get_jenkins_jobs():
     """Fetch top-level Jenkins jobs"""
