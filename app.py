@@ -11,6 +11,9 @@ JENKINS_URL = "http://172.20.4.91:8080/"
 USERNAME = "qualitia"
 API_TOKEN = os.getenv('JENKINS_API_TOKEN')
 
+# Define available environments
+ENVIRONMENTS = ["DEVMerge1", "QA1", "UAT1"]
+
 def get_jenkins_jobs():
     """Fetch top-level Jenkins jobs"""
     try:
@@ -21,7 +24,6 @@ def get_jenkins_jobs():
 
         jobs = []
         for job in jobs_data:
-            # Get job description from job's individual API
             job_api = f"{job['url']}api/json"
             job_resp = requests.get(job_api, auth=HTTPBasicAuth(USERNAME, API_TOKEN))
             if job_resp.status_code == 200:
@@ -44,17 +46,14 @@ def trigger_build(job_name, user_email):
         crumb_response = requests.get(crumb_url, auth=HTTPBasicAuth(USERNAME, API_TOKEN))
         crumb_response.raise_for_status()
         crumb_data = crumb_response.json()
-        headers = {crumb_data['crumbRequestField']: crumb_data['crumb'],
-                   "Content-Type": "application/x-www-form-urlencoded"}
-        
-        payload = {
-            'EMAIL': user_email
+        headers = {
+            crumb_data['crumbRequestField']: crumb_data['crumb'],
+            "Content-Type": "application/x-www-form-urlencoded"
         }
 
-        # Trigger build with parameters
-        
-
+        payload = {'EMAIL': user_email}
         print(f"Triggering job '{job_name}' for user: {user_email}")
+
         response = requests.post(build_url, auth=HTTPBasicAuth(USERNAME, API_TOKEN), headers=headers, data=payload)
 
         if response.status_code == 201:
@@ -66,7 +65,7 @@ def trigger_build(job_name, user_email):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', environments=ENVIRONMENTS)
 
 @app.route('/trigger', methods=['POST'])
 def trigger():
@@ -76,10 +75,12 @@ def trigger():
     flash(message, 'success' if success else 'error')
     return redirect(url_for('index'))
 
-@app.route('/get-jobs')
-def get_jobs():
-    jobs = get_jenkins_jobs()
-    return jsonify(jobs)
+@app.route('/get-jobs/<env_name>')
+def get_jobs(env_name):
+    """Fetch jobs filtered by environment suffix"""
+    all_jobs = get_jenkins_jobs()
+    env_filtered = [job for job in all_jobs if job['name'].lower().endswith(env_name.lower())]
+    return jsonify(env_filtered)
 
 @app.route('/job-description/<job_name>')
 def job_description(job_name):
