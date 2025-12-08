@@ -8,7 +8,7 @@ app.secret_key = 'your-secret-key'
 
 # Jenkins config
 JENKINS_URL = "http://172.20.4.91:8080/"
-USERNAME = "qualitia"
+USERNAME = "qualitia1c3ce8_12712993125607362407"
 API_TOKEN = os.getenv('JENKINS_API_TOKEN')
 
 # Define available environments
@@ -57,7 +57,7 @@ def trigger_build(job_name, user_email):
         response = requests.post(build_url, auth=HTTPBasicAuth(USERNAME, API_TOKEN), headers=headers, data=payload)
 
         if response.status_code == 201:
-            return True, "Build triggered successfully!"
+            return True, "Build triggered successfully! An Email will be triggered once the execution is completed."
         else:
             return False, f"Failed to trigger build. Status code: {response.status_code}"
     except Exception as e:
