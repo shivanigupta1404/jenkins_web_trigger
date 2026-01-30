@@ -54,7 +54,12 @@ def trigger_build(job_name, user_email):
         payload = {'EMAIL': user_email}
         print(f"Triggering job '{job_name}' for user: {user_email}")
 
-        response = requests.post(build_url, auth=HTTPBasicAuth(USERNAME, API_TOKEN), headers=headers, data=payload)
+        response = requests.post(
+            build_url,
+            auth=HTTPBasicAuth(USERNAME, API_TOKEN),
+            headers=headers,
+            data=payload
+        )
 
         if response.status_code == 201:
             return True, "Build triggered successfully! An Email will be triggered once the execution is completed."
@@ -69,8 +74,14 @@ def index():
 
 @app.route('/trigger', methods=['POST'])
 def trigger():
+    execution_type = request.form.get('executionType')
     job_name = request.form.get('job')
     user_email = request.form.get('email')
+
+    if not execution_type or not job_name:
+        flash("Execution Type and Job selection are mandatory.", "error")
+        return redirect(url_for('index'))
+
     success, message = trigger_build(job_name, user_email)
     flash(message, 'success' if success else 'error')
     return redirect(url_for('index'))
@@ -79,20 +90,11 @@ def trigger():
 def get_jobs(env_name):
     """Fetch jobs filtered by environment suffix"""
     all_jobs = get_jenkins_jobs()
-    env_filtered = [job for job in all_jobs if job['name'].lower().endswith(env_name.lower())]
+    env_filtered = [
+        job for job in all_jobs
+        if job['name'].lower().endswith(env_name.lower())
+    ]
     return jsonify(env_filtered)
-
-@app.route('/job-description/<job_name>')
-def job_description(job_name):
-    job_url = f"{JENKINS_URL}/job/{job_name}/api/json"
-    try:
-        response = requests.get(job_url, auth=HTTPBasicAuth(USERNAME, API_TOKEN))
-        if response.status_code == 200:
-            data = response.json()
-            return jsonify({"description": data.get("description", "")})
-    except Exception as e:
-        print(f"Error fetching description for {job_name}: {e}")
-    return jsonify({"description": "Unable to fetch description."})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
