@@ -38,7 +38,8 @@ def get_jenkins_jobs():
         print(f"Error fetching jobs: {e}")
         return []
 
-def trigger_build(job_name, user_email):
+def trigger_build(job_name, user_email, region_params=None):
+    """Trigger Jenkins build with optional region parameters"""
     crumb_url = f"{JENKINS_URL}/crumbIssuer/api/json"
     build_url = f"{JENKINS_URL}/job/{job_name}/buildWithParameters"
 
@@ -51,8 +52,14 @@ def trigger_build(job_name, user_email):
             "Content-Type": "application/x-www-form-urlencoded"
         }
 
+        # Base payload
         payload = {'EMAIL': user_email}
-        print(f"Triggering job '{job_name}' for user: {user_email}")
+
+        # Add region params if provided
+        if region_params:
+            payload.update(region_params)
+
+        print(f"Triggering job '{job_name}' for user: {user_email} with params: {payload}")
 
         response = requests.post(
             build_url,
@@ -82,7 +89,14 @@ def trigger():
         flash("Execution Type and Job selection are mandatory.", "error")
         return redirect(url_for('index'))
 
-    success, message = trigger_build(job_name, user_email)
+    # Handle regions only if Test Data Creation execution
+    region_params = {}
+    if execution_type == "testdata":
+        selected_regions = request.form.getlist('region')  # Checkbox list
+        for region in ["AMER", "EMEA", "APAC"]:
+            region_params[region] = 'true' if region in selected_regions else 'false'
+
+    success, message = trigger_build(job_name, user_email, region_params)
     flash(message, 'success' if success else 'error')
     return redirect(url_for('index'))
 

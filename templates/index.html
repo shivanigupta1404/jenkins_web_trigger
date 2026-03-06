@@ -40,7 +40,7 @@
                 <option value="">-- Select Execution Type --</option>
                 <option value="suite">Suite Execution</option>
                 <option value="individual">Individual Script</option>
-                <option value="skeleton">Automation First - Skeleton</option>
+                <option value="testdata">Test Data Setup</option>
             </select>
         </div>
 
@@ -63,10 +63,28 @@
             </select>
         </div>
 
-       <!-- Job Description -->
+        <!-- Job Description -->
         <div class="mb-3">
             <label for="description" class="form-label">Job Description</label>
             <textarea id="description" class="form-control" rows="4" readonly placeholder="Select a job to see its description..."></textarea>
+        </div>
+
+        <!-- Region (Checkboxes for Test data creation only) -->
+        <div class="mb-3" id="region-container" style="display:none;">
+            <label class="form-label">Select Region(s)</label>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="region" value="AMER" id="region-amer">
+                <label class="form-check-label" for="region-amer">AMER</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="region" value="EMEA" id="region-emea">
+                <label class="form-check-label" for="region-emea">EMEA</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="region" value="APAC" id="region-apac">
+                <label class="form-check-label" for="region-apac">APAC</label>
+            </div>
+            <div class="form-text">Select one or more regions.</div>
         </div>
 
         <!-- Email -->
@@ -89,6 +107,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const envSelect = document.getElementById("environment");
     const jobSelect = document.getElementById("job");
     const descBox = document.getElementById("description");
+    const regionContainer = document.getElementById("region-container");
+    const regionCheckboxes = document.querySelectorAll('input[name="region"]');
 
     let cachedJobs = [];
 
@@ -118,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
             );
         }
 
-        if (executionType.value === "skeleton") {
+        if (executionType.value === "testdata") {
             jobs = cachedJobs.filter(job =>
                 job.name.toLowerCase().includes("skeleton")
             );
@@ -141,6 +161,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     executionType.addEventListener("change", () => {
         resetJobs("-- Select Environment --");
+
+        // Show region only for Test data creation
+        if (executionType.value === "testdata") {
+            regionContainer.style.display = "block";
+        } else {
+            regionContainer.style.display = "none";
+            regionCheckboxes.forEach(cb => cb.checked = false);
+        }
+
         if (envSelect.value) envSelect.dispatchEvent(new Event("change"));
     });
 
